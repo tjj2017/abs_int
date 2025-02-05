@@ -1,4 +1,4 @@
-pragma Ada_2012;
+pragma SPARK_Mode (On);
 package body T1 is
 
    ----------
@@ -8,9 +8,10 @@ package body T1 is
    procedure Swap (X : in out Integer; Y : in out Integer) is
       Temp : Integer;
    begin
-      Temp := X;
+--      Temp := X;
       X := Y;
       Y := Temp;
+--      Y := X;
    end Swap;
 
 end T1;
