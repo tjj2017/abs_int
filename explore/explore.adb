@@ -202,6 +202,77 @@ package body Explore is
          V := 2;
       end loop;
 
- end I1;
+      while I < 0 loop
+         V := V + 1;
+      end loop;
+      I := V;
 
+   end I1;
+
+   procedure I2 (I : in out Integer) is
+      V : Integer := 0;
+   begin
+      while I < 0 loop
+         V := 1;
+         I := I + 1;
+      end loop;
+      I := V + I;
+
+      while I < 0 loop
+         if V = 0 then
+            I := I + 1;
+         end if;
+      end loop;
+
+      while I < 0 loop
+         if V = 0 then
+            I := I + 1;
+         end if;
+            V := 2;
+      end loop;
+
+      while I < 0 loop
+         if V = 0 then
+            I := I + 1;
+         elsif V = 2 then
+            I := I + 2;
+         end if;
+         V := 2;
+      end loop;
+   end I2;
+
+   procedure IO1 (I : in out Integer) is
+   begin
+      null;
+   end IO1;
+
+   procedure IO2 (I : in out Integer; J : in Integer) is
+   begin
+      I := I + 1;
+   end IO2;
+
+   procedure IO3 (I : in out Integer; J : out Integer) is
+   begin
+      I := I + 1;
+   end IO3;
+
+   procedure IO4 (I : in out Integer) is
+      V : Integer;
+   begin
+      V := 4;
+      I := I + 4;
+   end IO4;
+
+   procedure V1 (I : in out Integer) is
+      J : Integer := 1;
+      procedure V1_1 (I : in out Integer)
+      --# global in J;
+      is
+      begin
+         I := I + J;
+         J := 4;
+      end V1_1;
+   begin
+      V1_1 (I);
+   end V1;
 end Explore;
