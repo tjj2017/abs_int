@@ -16,4 +16,8 @@ package Explore is
    procedure IO2 (I : in out Integer; J : in Integer);
    procedure IO3 (I : in out Integer; J : out Integer);
    procedure IO4 (I : in out Integer);
+   procedure V1 (I : in out Integer);
+   procedure V2 (I : in out Integer);
+   procedure V3 (I : in out Integer);
+   procedure V4 (I : in out Integer);
 end Explore;
