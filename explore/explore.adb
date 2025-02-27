@@ -333,16 +333,16 @@ package body Explore is
    -- IO1 --
    ---------
 
-procedure IO1 (I : in out Integer) is
+   procedure IO1 (I : in out Integer) is
    begin
       null;
    end IO1;
 
---  1	explore.ads:15:19: warning: unused variable "I"[#21]
---  2	explore.ads:15:19: warning: "I" is not modified, could be IN[#20]
+   --  1	explore.ads:15:19: warning: unused variable "I"[#21]
+   --  2	explore.ads:15:19: warning: "I" is not modified, could be IN[#20]
 
---  1	explore.adb:339:8: Flow Error  35 - Importation of the initial value of variable I is ineffective.
---  2	explore.adb:339:8: Flow Error  31 - The variable I is exported but not (internally) defined.
+   --  1	explore.adb:339:8: Flow Error  35 - Importation of the initial value of variable I is ineffective.
+   --  2	explore.adb:339:8: Flow Error  31 - The variable I is exported but not (internally) defined.
 
    ---------
    -- IO2 --
@@ -440,7 +440,6 @@ procedure IO1 (I : in out Integer) is
 --  1	explore.adb:435:07: warning: initialization of "J" has no effect[#19]
 
 --  1	explore.adb:435:21: Flow Error  54 - The initialization at declaration of J is ineffective.
-
 
    --------
    -- V4 --
