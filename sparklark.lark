@@ -1,0 +1,497 @@
+    start : compilation | expression
+    
+    compilation : [compilation_unit]*
+    
+    compilation_unit : context_clause [library_item] 
+                     # | context_clause # subunit
+
+    library_item : library_unit_body
+                 # | [PRIVATE] library_unit_declaration
+                 # | [PRIVATE] library_unit_renaming_declaration
+
+    library_unit_body : subprogram_body # | package_body 
+
+    context_clause : [context_item]*
+    context_item : with_clause | use_clause | pragma
+
+    pragma : "pragma" [NAME] ["(" pragma_argument_association ["," pragma_argument_association]* ")"] ";"
+    pragma_argument_association : [NAME "=>"] expression
+                                | [aspect_mark "=>"] expression
+                                
+    with_clause : limited_with_clause | nonlimited_with_clause
+    limited_with_clause : "limited" [PRIVATE] "with" name ["," name]* ";"
+    nonlimited_with_clause : [PRIVATE] "with" name ["," name]* ";"
+
+    use_clause :use_package_clause | use_type_clause
+    use_package_clause : "use" name ["," name]* ";"
+    use_type_clause : "use" [ALL] "type" subtype_mark ["," subtype_mark]* ";"
+
+    subprogram_body : [overriding_indicator] subprogram_specification contract "is" body_section
+    body_section : declarative_part "begin" handled_sequence_of_statements subprogram_end ";" [pragma]*
+    subprogram_end : "end" NAME
+
+    contract : [classic_procedure_contract | classic_function_contract] [spark_2014_subprogram_contract]
+
+    classic_procedure_contract : [global_definition] [dependency_relation] [precondition] [postcondition]
+    classic_function_contract  : [global_definition] [precondition] [return_definition]
+    
+    global_definition : "global" mode global_item_list ";" [mode global_item_list ";"]*
+    global_item_list  : global_item ["," global_item]*
+
+    dependency_relation : "derives" dependency_clauses
+    dependency_clauses : dependency_clause ["&" dependency_clause]* ["&" null_dependency_clause]";"
+    dependency_clause : exported_variable_list "from" [extended_imported_item_list]
+                         null_dependency_clause : NULL "from" imported_item_list
+
+    exported_variable_list : exported_variable ["," exported_variable]*
+    extended_imported_item_list : STAR | [STAR ","] imported_item_list
+    imported_item_list : imported_item ["," imported_item]*
+
+    precondition : "pre" classic_predicate ";"
+    postcondition : "post" classic_predicate ";"
+
+    return_definition : "return" classic_predicate
+                      | "return" NAME "=>" classic_predicate
+
+    classic_predicate : expression
+
+    ada_expression : "ada" expression
+
+    name : direct_name | direct_name_tilde   # tilde for SPARK predicates.
+         | indexed_component | slice
+         | selected_component | selected_component_tilde | attribute_reference
+         | character_literal
+         | type_conversion | qualified_expression
+         | record_update | array_update # record_update and array update for SPARK predicates
+
+    direct_name : NAME
+    direct_name_tilde : NAME TILDE
+    defining_identifier : NAME
+    prefix      : name
+    discrete_range : subtype_indication | range  
+    range : range_attribute_reference
+          | simple_expression ".." simple_expression
+
+    range_constraint : "range" range
+    digits_constraint : "digits" simple_expression [range_constraint]
+    delta_constraint : "delta" simple_expression [range_constraint]
+    index_constraint : "(" discrete_range ["," discrete_range]* ")"
+
+    indexed_component : prefix "(" expression ["," expression]* ")"
+    slice : prefix "(" discrete_range ")"
+
+    selected_component : prefix "." selector_name
+    selector_name : NAME
+                  | character_literal
+                  | STRING
+    selected_component_tilde : selected_component_tilde
+
+    range_attribute_reference : prefix "'" range_attribute_designator
+    range_attribute_designator : "range" ["(" expression ")"]
+    attribute_reference : prefix "'" attribute_designator
+    attribute_designator : NAME ["(" expression ")"]
+                         | DELTA | DIGITS | MOD
+
+    qualified_expression : subtype_mark "'" "(" expression ")"  # | subtype_mark'aggregate
+    character_literal : "/."
+
+    type_conversion :subtype_mark "(" expression ")"
+
+    record_update : prefix "[" name "=>" expression [";" name "=>" expression]* "]"
+    array_update : prefix "[" index_list "=>" expression [";" index_list "=>" expression]* "]"
+    index_list : expression ["," expression]*
+
+    expression : relation [AND relation]*  | relation [AND_THEN relation]*
+               | relation [OR relation]*  | relation [OR_ELSE relation]*
+               | relation [XOR relation]*
+               | relation IMPLIES relation | relation EQUIV relation
+               | classic_quantified_expression # IMPLIES, EQUIV and quantified for SPARK predicates
+
+    relation : simple_expression [relational_operator simple_expression]
+             | simple_expression [NOT] IN membership_choice_list
+
+    relational_operator : EQ | NEQ | LEQ | GEQ | LT |GT
+    
+    membership_choice_list : membership_choice ["|" membership_choice]*
+    membership_choice : simple_expression | range | subtype_mark
+
+    simple_expression : [unary_adding_operator] term [binary_adding_operator term]*
+    term : factor [multiplying_operator factor]*
+    factor : primary [EXPONENT primary] | ABS primary | NOT primary
+    primary : NUMBER | NULL | STRING  # | aggregate
+            | name | parentheized_expression
+            | "(" conditional_expression ")" | "(" quantified_expression ")"
+            | "(" declare_expression ")"
+
+    unary_adding_operator : PLUS | MINUS
+    binary_adding_operator : PLUS | MINUS | ANDPERSAND
+
+    multiplying_operator : TIMES | DIVIDE | MOD | REM
+    
+    parentheized_expression : "(" expression ")"
+    conditional_expression : if_expression | case_expression
+
+    if_expression : "if" expression "then" expression [elsif_part]* [else_part]
+    elsif_part : "elsif" expression "then" expression
+    else_part : "else" expression
+
+    case_expression : "case" expression "is" case_expression_alternative ["," case_expression_alternative]*
+
+    case_expression_alternative : "when" discrete_choice_list "=>" expression
+    discrete_choice_list : discrete_choice ["|" discrete_choice]*
+
+    discrete_choice : expression | subtype_indication | range | OTHERS
+
+    quantified_expression : "for" quantifier loop_parameter_specification "=>" expression
+                          # | "for" quantifier iterator_specification "=>" expression
+
+    quantifier : ALL | SOME
+    discrete_subtype_definition : subtype_indication | range
+
+    classic_quantified_expression : quantifier_kind quantifier_body
+    quantifier_body : NAME "in" subtype_mark ["range" range] "=>" classic_predicate
+    quantifier_kind : FOR_ALL | FOR_SOME
+
+    declare_expression : "declare" [declare_item] "begin" expression
+    declare_item : object_declaration # | object_renaming_declaration
+
+    aspect_specification : "with" aspect_mark ["=>" aspect_definition] [aspect_list]
+    aspect_list : ("," aspect_mark ["=>" aspect_definition])*
+
+    aspect_mark : NAME ["'" CLASS]
+
+    aspect_definition : expression # | aggregate | global_aspect_definition
+             
+    spark_2014_subprogram_contract : "with" subprogram_aspect ["," subprogram_aspect]*
+    subprogram_aspect : spark_2014_subprogram_aspect | other_aspects
+    spark_2014_subprogram_aspect : global_aspect | dependency_aspect 
+                                 | precondition_aspect | postcondition_aspect
+    other_aspects : NAME "=>" expression
+    
+    contract_aspects : [global_aspect] [dependency_aspect] [precondition_aspect] [postcondition_aspect]
+
+    global_aspect : "global" "=>" global_specification
+    global_specification : "(" moded_global_list ["," moded_global_list]* ")"
+                         | global_list
+                         | null_global_specification
+    moded_global_list : mode_selector "=>" global_list
+    global_list : global_item 
+                | "(" global_item ["," global_item]* ")"
+    mode_selector     : INPUT | OUTPUT | IN_OUT | PROOF_IN
+    null_global_specification : NULL
+
+    dependency_aspect : "depends" "=>" dependency_list
+    dependency_list : NULL
+                    | "(" dependency_specification ["," dependency_specification]* ")"
+    dependency_specification : output_list "=>" [PLUS] input_list
+                             | null_dependecy_specification
+    null_dependecy_specification : NULL "=>" input_list
+    output_list : output
+                | "(" output ["," output]*")"
+    input_list : input
+               | "(" input ["," input]* ")"
+               | NULL
+
+    precondition_aspect : "pre" "=>" expression
+    postcondition_aspect : "post" "=>" expression
+            
+    mode : [IN] [OUT]
+
+    declarative_part : [declarative_item]*
+    declarative_item : basic_declarative_item | body
+    basic_declarative_item : basic_declaration # aspect_clause use_clause
+
+    basic_declaration : pragma
+                      | type_declaration | subtype_declaration
+                      | object_declaration | number_declaration
+                      | subprogram_declaration 
+                      # | package_declaration | expression_function_declaration
+                      # | null_procedure_declaration | expression_function_declaration
+                      # | package_declaration | renaming_declaration
+                      # | exception_declaration | generic_declaration
+                      # | generic_instantiation | abstract_subprogram_declaration
+
+      type_declaration : full_type_declaration
+                       | incomplete_type_declaration
+                       | private_type_declaration
+                       # | private_extension_declaration
+                       | spark_classic_type_assertion
+
+    spark_classic_type_assertion : "assert" NAME "'" "base" "is" subtype_mark ";"
+
+    full_type_declaration : "type" NAME [known_discriminant_part] "is" type_definition [aspect_specification] ";"
+                          # | task_type_declaration
+                          # | protected_type_declaration
+
+    type_definition : enumeration_type_definition | integer_type_definition
+                    | real_type_definition | array_type_definition
+                    | record_type_definition # | access_type_definition
+                    # | derived_type_definition | interface_type_definition
+
+    enumeration_type_definition : "(" enumeration_literals ")" 
+    enumeration_literals : enumeration_literal_specification ["," enumeration_literal_specification]*
+    enumeration_literal_specification : NAME | character_literal
+
+    integer_type_definition : signed_integer_type_definition | modular_type_definition
+    signed_integer_type_definition : "range" simple_expression ".." simple_expression
+    modular_type_definition : "mod" expression
+
+    real_type_definition : floating_point_definition | fixed_point_definition
+    floating_point_definition : "digits" expression [real_range_specification]
+    real_range_specification : "range" simple_expression ".." simple_expression
+    fixed_point_definition : ordinary_fixed_point_definition | decimal_fixed_point_definition
+    ordinary_fixed_point_definition : DELTA expression real_range_specification
+    decimal_fixed_point_definition : DELTA expression DIGITS expression [real_range_specification]
+    
+    array_type_definition : unconstrained_array_definition | constrained_array_definition
+    unconstrained_array_definition : "array" "(" index_subtypes ")" "of" component_definition
+    index_subtypes : index_subtype_definition ["," index_subtype_definition]*
+    index_subtype_definition : subtype_mark "range" "<>"
+    constrained_array_definition : "array" "(" subtype_definitions ")" "of" component_definition
+    subtype_definitions : discrete_subtype_definition ["," discrete_subtype_definition]*
+    component_definition : subtype_indication 
+                         # [aliased] subtype_indication
+                         # | [aliased] access_definition
+
+    record_type_definition : [[ABSTRACT] TAGGED] [LIMITED] record_definition
+    record_definition : "record" component_list "end" "record" [NAME]
+                      | NULL "record"
+    component_list : [component_item]+
+                   | [component_item]* variant_part
+                   |  NULL ";"
+    component_item : component_declaration # | aspect_clause
+    component_declaration : defining_identifier_list ":" component_definition component_completion ";"
+    component_completion : [ASSIGN initialization][aspect_specification]
+    initialization : expression
+
+    subtype_declaration : "subtype" NAME "is" subtype_indication [aspect_specification]";"
+    subtype_indication : subtype_mark [constraint]
+    # subtype_indication : [null_exclusion] subtype_mark [constraint]
+    subtype_mark : name
+    
+    constraint : scalar_constraint | composite_constraint
+    scalar_constraint : range_constraint | digits_constraint | delta_constraint
+    composite_constraint : index_constraint # | discriminant_constraint
+
+    variant_part : "case" direct_name "is" variant [variant]* "end" "case" ";"
+    variant: "when" discrete_choice_list "=>" component_list
+
+    object_declaration : defining_identifier_list ":" [[ALIASED] CONSTANT] object_subtype ";"
+    object_subtype : subtype_indication object_completion
+                   | array_type_definition object_completion
+                   # | access_definition object_completion
+                   # | single_task_declaration
+                   # | single_protected_declaration
+    object_completion : [ASSIGN expression] [aspect_specification]
+    defining_identifier_list : NAME ["," NAME]*
+
+    number_declaration : defining_identifier_list ":" "constant" ASSIGN expression ";"
+
+    subprogram_declaration : [overriding_indicator] subprogram_specification contract ";"
+    subprogram_specification : procedure_specification | function_specification
+
+    procedure_specification : "procedure" defining_program_unit_name parameter_profile
+    function_specification : "function" defining_designator parameter_and_result_profile
+    defining_designator : defining_program_unit_name # | defining_operator_symbol
+    defining_program_unit_name : [parent_unit_name "."] NAME
+    parent_unit_name : NAME
+
+    parameter_profile : [formal_part]
+    parameter_and_result_profile : [formal_part] "return" [null_exclusion] subtype_mark
+                                 # | [formal_part] "return" access_definition
+    formal_part : "(" parameter_specification [";" parameter_specification]* ")"
+    parameter_specification : defining_identifier_list ":" mode subtype_mark [aspect_specification]
+    # parameter_specification ::= defining_identifier_list ":" [aliased] mode 
+    #                             [null_exclusion] subtype_mark [:= default_expression]
+    #                             [aspect_specification]
+    #                           | defining_identifier_list : access_definition [:= default_expression]
+    #                             [aspect_specification]
+    
+    incomplete_type_declaration : "type" NAME [discriminant_part] ["is" TAGGED]";"
+                                | spark_classic_proof_type_declaration
+    spark_classic_proof_type_declaration : "type" NAME "is" "abstract" ";"
+    
+    private_type_declaration : "type" NAME [discriminant_part] "is" private_type_details ";"
+    private_type_details : [[ABSTRACT] TAGGED] [LIMITED] "private" [aspect_specification]
+
+    private_extension_declaration : "type" NAME [discriminant_part] "is" private_extension ";"
+    private_extension : [ABSTRACT] [LIMITED | SYNCHRONIZED] "new" subtype_indication extension_details
+    extension_details : ["and" interface_list] "with" "private" [aspect_specification]
+    interface_list : subtype_mark ["and" subtype_mark]
+
+    discriminant_part : unknown_discriminant_part | known_discriminant_part
+    unknown_discriminant_part : "(" "<>" ")"
+    known_discriminant_part : "(" discriminant_specification [";" discriminant_specification]* ")"
+    discriminant_specification : defining_identifier_list ":" [null_exclusion] type_details
+                               #  | defining_identifier_list : access_definition [:= default_expression]
+                               #    [aspect_specification] 
+    type_details : subtype_mark [ASSIGN default_expression] [aspect_specification] 
+    default_expression : expression
+
+    body : proper_body # | body_stub
+    proper_body : subprogram_body # | package_body | task_body | protected_body
+
+    handled_sequence_of_statements : sequence_of_statements # ["exception" [exception_handler]+
+    sequence_of_statements : [pragma]* [statement [pragma]*]+
+    statement : [label]* simple_statement | [label]* compound_statement
+
+    simple_statement : null_statement
+                     | assignment_statement | exit_statement
+                     | goto_statement | | procedure_call_statement
+                     | simple_return_statement # | entry_call_statement
+                     # | requeue_statement | delay_statement
+                     # | abort_statement | raise_statement
+                     # | code_statement
+                     | spark_classic_proof_statement
+
+    compound_statement : if_statement | case_statement
+                       | loop_statement | block_statement
+                       | extended_return_statement
+                       # | parallel_block_statement
+                       # | accept_statement | select_statement
+
+    null_statement : NULL ";"
+    label : "<<" statement_identifier ">>"
+    statement_identifier : direct_name
+
+    assignment_statement : NAME ASSIGN expression ";"
+    exit_statement : "exit" [name] [WHEN condition] ";" 
+    goto_statement : "goto" name ";"
+    procedure_call_statement : name ";"
+                             | prefix actual_parameter_part ";"
+    function_call : name
+                  | prefix actual_parameter_part
+    actual_parameter_part : "(" parameter_association ["," parameter_association]* ")"
+    parameter_association : [selector_name "=>"] explicit_actual_parameter
+    explicit_actual_parameter : expression
+    simple_return_statement : "return" [expression] ";"
+
+    if_statement : "if" condition "then" sequence_of_statements else_parts "end" "if" ";"
+    else_parts : [ELSIF condition "then" sequence_of_statements]* [ELSE sequence_of_statements]
+    
+    case_statement : "case" expression "is" [case_statement_alternative]+ "end" "case" ";"
+    case_statement_alternative : "when" discrete_choice_list "=>" sequence_of_statements
+
+    loop_statement : [statement_identifier ":"] [iteration_scheme] loop_body ";"
+    loop_body : "loop" sequence_of_statements "end" "loop" [identifier]
+    
+    iteration_scheme : WHILE condition
+                     | FOR loop_parameter_specification
+                     | FOR iterator_specification
+                     # | [parallel [aspect_specification]] for procedural_iterator
+                     # | parallel [(chunk_specification)] [aspect_specification]
+                     # for loop_parameter_specification
+                     # | parallel [(chunk_specification)] [aspect_specification] 
+                     # for iterator_specification
+
+    # chunk_specification ::= 
+     # integer_simple_expression
+     # | defining_identifier in discrete_subtype_definition
+
+    loop_parameter_specification : defining_identifier "in" [REVERSE] count_details
+    count_details : discrete_subtype_definition [iterator_filter]
+    iterator_filter : "when" condition
+
+    iterator_specification : defining_identifier [":" loop_parameter_subtype_indication] iterator_sort
+    iterator_sort : (IN | OF) [REVERSE] name [iterator_filter]
+    loop_parameter_subtype_indication : subtype_indication # | access_definition
+
+    block_statement : [statement_identifier ":"] ["declare" declarative_part] block_body ";"
+    block_body : "begin" handled_sequence_of_statements "end" [identifier]
+
+    extended_return_statement : "return" extended_return_object_declaration extended_return_body ";"
+    extended_return_body : ["do" handled_sequence_of_statements "end" "return"]
+    extended_return_object_declaration : defining_identifier ":" [ALIASED] [CONSTANT] return_object ";"
+    return_object : return_subtype_indication [ASSIGN expression] [aspect_specification] 
+    return_subtype_indication : subtype_indication # | access_definition
+
+    spark_classic_proof_statement : assert_statement | check_statement
+    assert_statement : "assert" classic_predicate
+    check_statement  : "check" classic_predicate
+    
+    condition : expression
+    identifier : direct_name
+    
+    overriding_indicator : [NOT] "overriding"
+    null_exclusion : "not" "null"
+    
+    exported_variable : NAME
+    global_item       : NAME
+    imported_item     : NAME
+    input             : NAME
+    output            : NAME
+    procedure_name    : NAME
+    type_name         : NAME
+    variable_name     : NAME
+
+    ABS      : "abs"
+    ABSTRACT : "abstract"
+    ALIASED  : "aliased"
+    ALL      : "all"
+    AND      : "and"
+    AND_THEN : "and" WS "then"
+    ANDPERSAND : "&"
+    ASSIGN   : ":="
+    CLASS    : "class"
+    CONSTANT : "constant"
+    DELTA    : "delta"
+    DIGITS   : "digits"
+    DIVIDE   : "/"
+    ELSE     : "else"
+    ELSIF    : "elsif"
+    END      : "end"
+    EQ       : "="
+    EQUIV    : "<->"
+    EXPONENT : "**"
+    FOR      : "for"
+    FOR_ALL  : "for" WS "all"
+    FOR_SOME : "for" WS "some"
+    GEQ      : ">="
+    GLOBAL   : "global"
+    GT       : ">"
+    IMPLIES  : "->"
+    IN       : "in"
+    IN_OUT   : "in_out"
+    INPUT    : "input"
+    LEQ      : "<="
+    LIMITED  : "limited"
+    LT       : "<"
+    MINUS    : "-"
+    MOD      : "mod"
+    NEQ      : "/="
+    NOT      : "not"
+    NULL     : "null"
+    OF       : "of"
+    OR       : "or"
+    OR_ELSE  : "or" WS "else"
+    OTHERS   : "others"
+    OUT      : "out"
+    OUTPUT   : "output"
+    PLUS     : "+"
+    PRIVATE  : "private"
+    PROOF_IN : "proof_in"
+    REM      : "rem"
+    REVERSE  : "reverse"
+    SOME     : "some"
+    STAR     : "*"
+    SYNCHRONIZED : "synchronized"
+    TAGGED   : "tagged"
+    TILDE    : "~"
+    TIMES    : "*"
+    WHEN     : "when"
+    WHILE    : "while"
+    XOR      : "xor"
+    
+    %import common.CNAME -> NAME
+    %import common.ESCAPED_STRING -> STRING
+    %import common.INT -> NUMBER
+    %import common.WS
+    %ignore WS
+
+    ANNO : "--#"
+    %ignore ANNO
+
+    COMMENT : "--"/[^\#].*/ 
+    %ignore COMMENT
+
+
