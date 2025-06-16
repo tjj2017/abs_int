@@ -41,7 +41,7 @@
     dependency_relation : "derives" dependency_clauses
     dependency_clauses : dependency_clause ["&" dependency_clause]* ["&" null_dependency_clause]";"
     dependency_clause : exported_variable_list "from" [extended_imported_item_list]
-                         null_dependency_clause : NULL "from" imported_item_list
+    null_dependency_clause : NULL "from" imported_item_list
 
     exported_variable_list : exported_variable ["," exported_variable]*
     extended_imported_item_list : STAR | [STAR ","] imported_item_list
