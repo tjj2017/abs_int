@@ -84,7 +84,7 @@
     selector_name : NAME
                   | character_literal
                   | STRING
-    selected_component_tilde : selected_component_tilde
+    selected_component_tilde : selected_component TILDE
 
     range_attribute_reference : prefix "'" range_attribute_designator
     range_attribute_designator : "range" ["(" expression ")"]
