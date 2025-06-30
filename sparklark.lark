@@ -331,13 +331,13 @@
     body : proper_body # | body_stub
     proper_body : subprogram_body # | package_body | task_body | protected_body
 
-    handled_sequence_of_statements : sequence_of_statements # ["exception" [exception_handler]+
+    handled_sequence_of_statements : sequence_of_statements # ["exception" [exception_handler]+]
     sequence_of_statements : [pragma]* [statement [pragma]*]+
     statement : [label]* simple_statement | [label]* compound_statement
 
     simple_statement : null_statement
                      | assignment_statement | exit_statement
-                     | goto_statement | | procedure_call_statement
+                     | goto_statement | procedure_call_statement
                      | simple_return_statement # | entry_call_statement
                      # | requeue_statement | delay_statement
                      # | abort_statement | raise_statement
@@ -354,7 +354,7 @@
     label : "<<" statement_identifier ">>"
     statement_identifier : direct_name
 
-    assignment_statement : NAME ASSIGN expression ";"
+    assignment_statement : name ASSIGN expression ";"
     exit_statement : "exit" [name] [WHEN condition] ";" 
     goto_statement : "goto" name ";"
     procedure_call_statement : name ";"
