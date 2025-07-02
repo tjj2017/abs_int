@@ -126,7 +126,7 @@
     unary_adding_operator : PLUS | MINUS
     binary_adding_operator : PLUS | MINUS | ANDPERSAND
 
-    multiplying_operator : TIMES | DIVIDE | MOD | REM
+    multiplying_operator : STAR | DIVIDE | MOD | REM
     
     parentheized_expression : "(" expression ")"
     conditional_expression : if_expression | case_expression
@@ -362,12 +362,16 @@
     function_call : name
                   | prefix actual_parameter_part
     actual_parameter_part : "(" parameter_association ["," parameter_association]* ")"
-    parameter_association : [selector_name "=>"] explicit_actual_parameter
+    parameter_association : named_association | positional_association
+    named_association : selector_name "=>" explicit_actual_parameter
+    positional_association : explicit_actual_parameter
     explicit_actual_parameter : expression
     simple_return_statement : "return" [expression] ";"
 
     if_statement : "if" condition "then" sequence_of_statements else_parts "end" "if" ";"
-    else_parts : [ELSIF condition "then" sequence_of_statements]* [ELSE sequence_of_statements]
+    else_parts : [elsif_part]* [else_part]
+    elsif_part : "elsif" condition "then" sequence_of_statements
+    else_part  : "else" sequence_of_statements
     
     case_statement : "case" expression "is" [case_statement_alternative]+ "end" "case" ";"
     case_statement_alternative : "when" discrete_choice_list "=>" sequence_of_statements
@@ -406,8 +410,8 @@
     return_subtype_indication : subtype_indication # | access_definition
 
     spark_classic_proof_statement : assert_statement | check_statement
-    assert_statement : "assert" classic_predicate
-    check_statement  : "check" classic_predicate
+    assert_statement : "assert" classic_predicate ";"
+    check_statement  : "check" classic_predicate ";"
     
     condition : expression
     identifier : direct_name
@@ -477,7 +481,6 @@
     SYNCHRONIZED : "synchronized"
     TAGGED   : "tagged"
     TILDE    : "~"
-    TIMES    : "*"
     WHEN     : "when"
     WHILE    : "while"
     XOR      : "xor"
